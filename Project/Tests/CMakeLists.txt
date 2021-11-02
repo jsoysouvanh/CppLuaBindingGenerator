@@ -12,7 +12,9 @@ add_subdirectory(ThirdParty/Lua)
 
 set(CppLuaBindingTests CppLuaBindingTests)
 add_executable(${CppLuaBindingTests}
-					main.cpp)
+					"Src/Component.cpp"
+
+					"main.cpp")
 
 target_compile_features(${CppLuaBindingTests} PUBLIC cxx_std_17)
 

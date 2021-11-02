@@ -38,7 +38,9 @@ shouldParseAllEntities = false
 
 # Include directories of the project
 projectIncludeDirectories = [
-	'''./Include'''
+	'''./Include''',
+	'''./ThirdParty/Lua/lua-5.4.3/include''',
+	'''./ThirdParty/sol2/include'''
 ]
 
 # Must be one of "msvc", "clang++", "g++"
