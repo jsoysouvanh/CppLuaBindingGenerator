@@ -1,0 +1,45 @@
+[CodeGenManagerSettings]
+# List of supported extensions
+supportedFileExtensions = [".h", ".hpp"]
+
+# Files contained in the directories of this list will be parsed
+toProcessDirectories = [
+	'''Include/'''
+]
+
+# Files to parse which are not included in any directory of toParseDirectories
+toProcessFiles = []
+
+# Files contained in the directories of this list will be ignored
+ignoredDirectories = [
+	'''Include/Generated'''
+]
+
+# Files not to parse which are not included in any directory of ignoredDirectories
+ignoredFiles = []
+
+
+[CodeGenUnitSettings]
+# Generated files will be located here
+outputDirectory = '''Include/Generated'''
+
+generatedHeaderFileNamePattern = "##FILENAME##.h.h"
+generatedSourceFileNamePattern = "##FILENAME##.cpp.h"
+classFooterMacroPattern = "##CLASSFULLNAME##_GENERATED"
+headerFileFooterMacroPattern = "File_##FILENAME##_GENERATED"
+
+
+[ParsingSettings]
+# Abort parsing on first encountered error
+shouldAbortParsingOnFirstError = true
+
+# Should all entities be parsed whether they are tagged with the macro or not
+shouldParseAllEntities = false
+
+# Include directories of the project
+projectIncludeDirectories = [
+	'''./Include'''
+]
+
+# Must be one of "msvc", "clang++", "g++"
+compilerExeName = "clang++"
