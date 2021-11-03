@@ -14,8 +14,16 @@ namespace fs = std::filesystem;
 
 fs::path getLuaScriptPath(std::string&& filename)
 {
-	//Working directory is CppLuaBindingGenerator/Build/x64-Debug/Bin
-	return fs::current_path().parent_path().parent_path().parent_path() / "Project" / "Tests" / "LuaScripts" / std::forward<std::string>(filename);
+	//current_path is somewhere in the project directory
+	fs::path projectRoot = fs::current_path();
+
+	//Rewind until the project root
+	while (projectRoot.stem() != "CppLuaBindingGenerator")
+	{
+		projectRoot = projectRoot.parent_path();
+	}
+
+	return projectRoot / "Project" / "Tests" / "LuaScripts" / std::forward<std::string>(filename);
 }
 
 bool initLua(sol::state& lua)

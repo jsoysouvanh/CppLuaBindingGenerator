@@ -10,6 +10,8 @@ add_subdirectory(ThirdParty/Lua)
 #		Configure the tests
 ###########################################
 
+find_package(Threads REQUIRED)
+
 set(CppLuaBindingTests CppLuaBindingTests)
 add_executable(${CppLuaBindingTests}
 					"Src/Component.cpp"
@@ -25,7 +27,7 @@ target_include_directories(${CppLuaBindingTests}
 								"ThirdParty/Lua/lua-5.4.3/include"
 								"ThirdParty/sol2/include")
 
-target_link_libraries(${CppLuaBindingTests} PRIVATE lua_static)
+target_link_libraries(${CppLuaBindingTests} PRIVATE lua_static Threads::Threads)
 
 if (MSVC)
 	target_compile_options(${CppLuaBindingTests} PRIVATE /MP)
