@@ -12,8 +12,15 @@ bool Component::initLuaBinding(sol::state& luaState)
 	{
 		luaType = luaState.new_usertype<Component>("Component");
 
-		luaType.set("initlua", &Component::init);
+		//All fields
+		luaType.set("intReadonlyLua", sol::readonly(&Component::intReadonly));
+		luaType.set("intReadWriteLua", &Component::intReadWrite);
+
+		//All methods that are LuaExposed
 		luaType.set("update", &Component::update);
+
+		//All static methods that are LuaExposed
+		luaType.set("staticFunc", &Component::staticFunc);
 
 		return true;
 	}
@@ -26,12 +33,26 @@ bool Component::deinitLuaBinding()
 	if (luaType.lua_state() != nullptr)
 	{
 		luaType.unregister();
-		luaType = sol::usertype<Component>();	//crash if this line is not here, wtf
+		luaType = sol::usertype<Component>();	//sol::state dtor crash if this line is not here, wtf
 
 		return true;
 	}
 
 	return false;
+}
+
+//Generated from LuaFunc(LuaImpl, "initlua") property
+void Component::init()
+{
+	//TODO: Should maybe forward the call to an external class to handle
+	//call status
+	return luaType["initlua"].call<void>(this);	//<void> is <ReturnType>
+}
+
+//Generated from LuaFunc(staticFuncLua) property
+void Component::staticFuncLua() noexcept
+{
+	return luaType["staticFuncLua"].call<void>();	//<void> is <ReturnType>
 }
 
 //=======================================
@@ -40,13 +61,12 @@ bool Component::deinitLuaBinding()
 
 #include <iostream>
 
-void Component::init()
-{
-	std::cout << "Component::init() from C++" << std::endl;
-}
-
 void Component::update()
 {
 	std::cout << "Component::update() from C++" << std::endl;
 }
 
+void Component::staticFunc() noexcept
+{
+	std::cout << "Component::staticFunc() from C++" << std::endl;
+}

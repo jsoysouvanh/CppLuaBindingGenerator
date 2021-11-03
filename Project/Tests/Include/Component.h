@@ -2,18 +2,35 @@
 
 #include <sol/sol.hpp>	//GENERATED CODE
 
-#include "ELuaFunction.h"
+#include "ELuaProperty.h"
 
 #include "Generated/Component.h.h"
 
 class CLASS() Component
 {
+	private:
+		FIELD(LuaVar(ReadOnly, "intReadonlyLua"))
+		int intReadonly = 0;
+
+		FIELD(LuaVar(ReadWrite, "intReadWriteLua"))
+		int intReadWrite = 0;
+
 	public:
-		METHOD(LuaFunc(ELueFunction::ExposedToLua, "initlua"))
+		METHOD(LuaFunc(LuaImpl, "initlua"))
 		virtual void init();
 
-		METHOD(LuaFunc(ELueFunction::ExposedToLua, "update"))
+		METHOD(LuaFunc(LuaExposed))
 		virtual void update();
+
+		METHOD(LuaFunc(LuaExposed))
+		static void staticFunc() noexcept;
+
+		METHOD(LuaFunc(LuaImpl))
+		static void staticFuncLua() noexcept;
+
+
+
+
 
 		////// TARGET GENERATED CODE FROM HERE
 	private:
