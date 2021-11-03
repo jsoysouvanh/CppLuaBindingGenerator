@@ -29,8 +29,14 @@ target_include_directories(${CppLuaBindingTests}
 
 target_link_libraries(${CppLuaBindingTests} PRIVATE lua_static Threads::Threads)
 
+#OS specific flags
 if (MSVC)
 	target_compile_options(${CppLuaBindingTests} PRIVATE /MP)
+endif()
+
+#User flags
+if (CI_BUILD)
+	target_compile_definitions(${CppLuaBindingTests} PRIVATE CI_BUILD=1)
 endif()
 
 # Create the command to run CppLuaBindingGenerator

@@ -5,7 +5,6 @@ function Component:initlua()
     print("intReadOnlyLua = " .. self.intReadonlyLua)
 
     self.intReadWriteLua = self.intReadWriteLua + 1
-    self.intReadOnlyLua = self.intReadOnlyLua + 1   -- Should do nothing since readonly
 end
 
 function Component:staticFuncLua()

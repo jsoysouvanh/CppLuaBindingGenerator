@@ -53,16 +53,26 @@ void reloadLuaScripts(sol::state& lua)
 
 void loop(sol::state& lua)
 {
+#ifdef CI_BUILD
+	constexpr std::size_t const MAX_LOOP_COUNT = 5u;
+#else
+	constexpr std::size_t const MAX_LOOP_COUNT = 1000u;
+#endif
+
 	Component component;
 
 	std::vector<Component*> components = { &component };
 
+	std::size_t loopCount = 0u;
 	std::string input;
+
+#ifndef CI_BUILD
 	std::thread inputPolling([&input]()
 							 {
 								 //Data race with main thread but we don't care
 								 std::cin >> input;
-							 });
+							 }); 
+#endif
 
 	do
 	{
@@ -78,9 +88,11 @@ void loop(sol::state& lua)
 		std::cout << std::endl;
 		std::this_thread::sleep_for(1s);
 
-	} while (input.empty());
+	} while (input.empty() && loopCount++ <= MAX_LOOP_COUNT);
 
+#ifndef CI_BUILD
 	inputPolling.join();
+#endif
 }
 
 int main()
