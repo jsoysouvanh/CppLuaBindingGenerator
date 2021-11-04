@@ -4,3 +4,6 @@
 [submodule "Project/Tests/ThirdParty/Lua"]
 	path = Project/Tests/ThirdParty/Lua
 	url = https://github.com/walterschell/Lua
+[submodule ".\\Project\\Tests\\ThirdParty\\efsw"]
+	path = .\\Project\\Tests\\ThirdParty\\efsw
+	url = https://github.com/SpartanJ/efsw.git

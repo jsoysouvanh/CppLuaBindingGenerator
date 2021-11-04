@@ -6,31 +6,63 @@
 
 #define SOL_ALL_SAFETIES_ON 1
 #include <sol/sol.hpp>
+#include <efsw/efsw.hpp>
 
+#include "FileWatchListener.h"
 #include "Component.h"
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
-fs::path getLuaScriptPath(std::string&& filename)
+fs::path const& getLuaScriptsDir()
 {
-	//current_path is somewhere in the project directory
-	fs::path projectRoot = fs::current_path();
+	static fs::path luaScriptsDir;
 
-	//Rewind until the project root
-	while (projectRoot.stem() != "CppLuaBindingGenerator")
+	//Compute luaScriptsDir only once, then always return the same computed value
+	if (luaScriptsDir.empty())
 	{
-		projectRoot = projectRoot.parent_path();
+		//current_path is somewhere in the project directory
+		fs::path projectRoot = fs::current_path();
+
+		//Rewind until the project root
+		while (projectRoot.stem() != "CppLuaBindingGenerator")
+		{
+			projectRoot = projectRoot.parent_path();
+		}
+
+		luaScriptsDir = projectRoot / "Project" / "Tests" / "LuaScripts";
 	}
 
-	return projectRoot / "Project" / "Tests" / "LuaScripts" / std::forward<std::string>(filename);
+	return luaScriptsDir;
+}
+
+fs::path getLuaScriptPath(std::string&& filename)
+{
+	return getLuaScriptsDir() / std::forward<std::string>(filename);
 }
 
 bool initLua(sol::state& lua)
 {
 	lua.open_libraries(sol::lib::base);
 
-	return Component::initLuaBinding(lua);
+	//Must init components before loading scripts or an error will be thrown for unknown types
+	bool result = Component::initLuaBinding(lua);
+
+	//Add all lua scripts contained in LuaScripts/ folder to the state
+	for (auto& entry : fs::recursive_directory_iterator(getLuaScriptsDir()))
+	{
+		if (entry.is_regular_file())
+		{
+			fs::path path = entry.path();
+
+			if (path.has_extension() && path.extension() == ".lua")
+			{
+				lua.script_file(path.string());
+			}
+		}
+	}
+
+	return result;
 }
 
 bool deinitLua()
@@ -38,17 +70,16 @@ bool deinitLua()
 	return Component::deinitLuaBinding();
 }
 
-void reloadLuaScripts(sol::state& lua)
+void initFileWatcher(sol::state& lua)
 {
-	static char const* luaScripts[] =
-	{
-		"Component.lua"
-	};
+	static efsw::FileWatcher fileWatcher;
+	static FileWatchListener fileListener(lua);
 
-	for (char const* luaScript : luaScripts)
-	{
-		lua.script_file(getLuaScriptPath(luaScript).string());
-	}
+	efsw::WatchID id = fileWatcher.addWatch(getLuaScriptsDir().string(), &fileListener, true);
+
+	std::cout << efsw::Errors::Log::getLastErrorLog() << std::endl;
+
+	fileWatcher.watch();
 }
 
 void loop(sol::state& lua)
@@ -76,8 +107,6 @@ void loop(sol::state& lua)
 
 	do
 	{
-		reloadLuaScripts(lua);
-
 		std::cout << "=================" << std::endl << "BEGIN FRAME" << std::endl;
 
 		component.init();
@@ -103,6 +132,8 @@ int main()
 	{
 		std::cerr << "Failed to init lua." << std::endl;
 	}
+
+	initFileWatcher(lua);
 
 	loop(lua);
 

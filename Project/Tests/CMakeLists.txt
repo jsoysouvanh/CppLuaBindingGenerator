@@ -5,6 +5,7 @@ project(CppLuaBindingGeneratorTests)
 include(CTest)
 
 add_subdirectory(ThirdParty/Lua)
+add_subdirectory(ThirdParty/efsw)
 
 ###########################################
 #		Configure the tests
@@ -30,6 +31,7 @@ target_include_directories(${CppLuaBindingTests}
 target_link_libraries(${CppLuaBindingTests}
 						PRIVATE
 							lua_static
+							efsw
 							Threads::Threads
 							$<$<AND:$<CXX_COMPILER_ID:Clang,AppleClang>,$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},9.0>>:stdc++fs>	#filesystem	pre Clang-9
 							$<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},9.0>>:stdc++fs>					#filesystem	pre GCC-9
