@@ -44,6 +44,6 @@ bool overlap(ELuaProperty lhs, ELuaProperty rhs) noexcept
 
 struct LuaProperty
 {
-	ELuaProperty		value;
-	std::string const&	name;
+	ELuaProperty	value;
+	std::string		name;
 };

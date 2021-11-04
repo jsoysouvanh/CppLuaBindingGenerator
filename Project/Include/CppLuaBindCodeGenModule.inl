@@ -1,5 +1,15 @@
 //TODO: Copyright here
 
+CppLuaBindCodeGenModule::CppLuaBindCodeGenModule() noexcept
+{
+	addPropertyCodeGen(_luaFuncPropertyCodeGen);
+}
+
+CppLuaBindCodeGenModule::CppLuaBindCodeGenModule(CppLuaBindCodeGenModule const&) noexcept:
+	CppLuaBindCodeGenModule()
+{
+}
+
 CppLuaBindCodeGenModule* CppLuaBindCodeGenModule::clone() const noexcept
 {
 	return new CppLuaBindCodeGenModule(*this);
@@ -38,6 +48,32 @@ kodgen::ETraversalBehaviour CppLuaBindCodeGenModule::generateClassFooterCodeForE
 	}
 }
 
+kodgen::ETraversalBehaviour CppLuaBindCodeGenModule::generateSourceFileHeaderCodeForEntity(kodgen::EntityInfo const& entity,
+																						   kodgen::MacroCodeGenEnv& env, std::string& inout_result) noexcept
+{
+	//The entity is a struct or a class
+	if (entity.entityType && (kodgen::EEntityType::Class | kodgen::EEntityType::Struct))
+	{
+		kodgen::StructClassInfo const& class_ = static_cast<kodgen::StructClassInfo const&>(entity);
+
+		generateSourceCodeForClass(class_, env, inout_result);
+
+		//Iterate on nested entities if it has at least 1 nested struct or class that could require lua bindings
+		//Otherwise, just move on to the next class in the AST
+		return (!class_.nestedClasses.empty() || !class_.nestedStructs.empty()) ?
+			kodgen::ETraversalBehaviour::Recurse :
+			kodgen::ETraversalBehaviour::Continue;
+	}
+	else
+	{
+		//Only namespaces can contain structs/classes. Ignore all other entities.
+		//TODO: Should support variables and functions bindings later
+		return (entity.entityType == kodgen::EEntityType::Namespace) ?
+			kodgen::ETraversalBehaviour::Recurse :
+			kodgen::ETraversalBehaviour::Break;
+	}
+}
+
 bool CppLuaBindCodeGenModule::generateClassFooterCodeForClass(kodgen::StructClassInfo const& class_,
 															  kodgen::MacroCodeGenEnv& env, std::string& inout_result) noexcept
 {
@@ -70,13 +106,106 @@ bool CppLuaBindCodeGenModule::generateClassFooterCodeForClass(kodgen::StructClas
 	return true;
 }
 
-
-
-
-
 bool CppLuaBindCodeGenModule::generateSourceCodeForClass(kodgen::StructClassInfo const& class_,
 														 kodgen::MacroCodeGenEnv& env, std::string& inout_result) noexcept
 {
+	if (_validEntities.find(&class_) != _validEntities.cend())
+	{
+		//Define sol::userType field
+		std::string classFullName = class_.getFullName();
+		inout_result += "sol::usertype<" + classFullName + "> " + classFullName + "::luaType = sol::lua_nil;" + env.getSeparator() + env.getSeparator();
+
+		//Define fields
+		return generateInitLuaBindingDefinition(class_, env, inout_result) &&
+				generateDeinitLuaBindingDefinition(class_, env, inout_result);
+	}
+
+	return true;
+}
+
+bool CppLuaBindCodeGenModule::generateInitLuaBindingDefinition(kodgen::StructClassInfo const& class_,
+															   kodgen::MacroCodeGenEnv& env, std::string& inout_result) noexcept
+{
+	auto isConstFieldLambda = [](kodgen::FieldInfo const& field) -> bool
+	{
+		return (field.type.typeParts.front().descriptor & kodgen::ETypeDescriptor::Const) != kodgen::ETypeDescriptor::Undefined;
+	};
+
+	std::string error;
+
+	auto it = _validEntities.find(&class_);
+
+	inout_result += "bool " + class_.getFullName() + "::initLuaBinding(sol::state& luaState) {" + env.getSeparator() +
+		"if (luaType.lua_state() == nullptr)" + env.getSeparator() +
+		"{" + env.getSeparator() +
+			"luaType = luaState.new_usertype<" + class_.name + ">(" + _validEntities.find(&class_)->second.name + ");" + env.getSeparator();
+
+	//Generate fields
+	for (kodgen::FieldInfo const& field : class_.fields)
+	{
+		if (auto prop = getLuaProperty(field, error))
+		{
+			if (prop->value == ELuaProperty::ReadOnly || isConstFieldLambda(field))
+			{
+				inout_result += "luaType.set(" + prop->name + ", sol::readonly(&" + field.getFullName() + "));" + env.getSeparator();
+			}
+			else
+			{
+				inout_result += "luaType.set(" + prop->name + ", &" + field.getFullName() + ");" + env.getSeparator();
+			}
+		}
+		else if (!error.empty())
+		{
+			if (env.getLogger() != nullptr)
+			{
+				env.getLogger()->log(error, kodgen::ILogger::ELogSeverity::Error);
+			}
+
+			return false;
+		}
+	}
+
+	//Generate methods / static methods
+	for (kodgen::MethodInfo const& method : class_.methods)
+	{
+		if (auto prop = getLuaProperty(method, error))
+		{
+			if (prop->value == ELuaProperty::LuaExposed)
+			{
+				inout_result += "luaType.set(" + prop->name + ", &" + method.getFullName() + ");" + env.getSeparator();
+			}
+		}
+		else if (!error.empty())
+		{
+			if (env.getLogger() != nullptr)
+			{
+				env.getLogger()->log(error, kodgen::ILogger::ELogSeverity::Error);
+			}
+
+			return false;
+		}
+	}
+
+	inout_result += "return true;" + env.getSeparator() +
+					"}" + env.getSeparator();
+
+	inout_result += "return false; }" + env.getSeparator() + env.getSeparator();
+
+	return true;
+}
+
+bool CppLuaBindCodeGenModule::generateDeinitLuaBindingDefinition(kodgen::StructClassInfo const& class_,
+																 kodgen::MacroCodeGenEnv& env, std::string& inout_result) noexcept
+{
+	inout_result += "bool " + class_.getFullName() + "::deinitLuaBinding() {" + env.getSeparator() +
+		"if (luaType.lua_state() != nullptr) {" + env.getSeparator() +
+			"luaType.unregister();" + env.getSeparator() +
+			"luaType = sol::lua_nil;" + env.getSeparator() +
+			"return true;" + env.getSeparator() +
+		"}" + env.getSeparator() +
+		"return false;" + env.getSeparator() +
+	"}" + env.getSeparator();
+
 	return true;
 }
 
@@ -120,7 +249,7 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 		if (prop != nullptr)
 		{
 			//Must have 1 or 2 args (2nd arg is optional)
-			if (prop->arguments.size() != 1u || prop->arguments.size() != 2u)
+			if (prop->arguments.size() != 1u && prop->arguments.size() != 2u)
 			{
 				errorMessage = std::string(varLuaPropertyName) + " must have 1 or 2 arguments (1: " + std::string(readonlyPropertyName) +
 								" or " + std::string(readWritePropertyName) + ", 2: name of the lua variable).";
@@ -167,15 +296,15 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 
 	auto getFuncLuaPropertyLambda = [](kodgen::EntityInfo const& entity, std::string& errorMessage) -> std::optional<LuaProperty>
 	{
-		kodgen::Property const* prop = findProperty(entity, funcLuaPropertyName);
+		kodgen::Property const* prop = findProperty(entity, LuaFuncPropertyCodeGen::funcLuaPropertyName);
 
 		if (prop != nullptr)
 		{
 			//Must have 1 or 2 args (2nd arg is optional)
-			if (prop->arguments.size() != 1u || prop->arguments.size() != 2u)
+			if (prop->arguments.size() != 1u && prop->arguments.size() != 2u)
 			{
-				errorMessage = std::string(funcLuaPropertyName) + " must have 1 or 2 arguments (1: " + std::string(luaImplPropertyName) +
-					" or " + std::string(luaExposedPropertyName) + ", 2: name of the lua function).";
+				errorMessage = std::string(LuaFuncPropertyCodeGen::funcLuaPropertyName) + " must have 1 or 2 arguments (1: " + std::string(LuaFuncPropertyCodeGen::luaImplPropertyName) +
+					" or " + std::string(LuaFuncPropertyCodeGen::luaExposedPropertyName) + ", 2: name of the lua function).";
 			}
 			else
 			{
@@ -184,8 +313,8 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 
 				if (it == luaPropertyNameValue.cend() || !overlap(it->second, ELuaProperty::LuaImpl | ELuaProperty::LuaExposed))
 				{
-					errorMessage = std::string(funcLuaPropertyName) + " 1st argument must be one of " + std::string(luaImplPropertyName) +
-						" or " + std::string(luaExposedPropertyName) + ".";
+					errorMessage = std::string(LuaFuncPropertyCodeGen::funcLuaPropertyName) + " 1st argument must be one of " + std::string(LuaFuncPropertyCodeGen::luaImplPropertyName) +
+						" or " + std::string(LuaFuncPropertyCodeGen::luaExposedPropertyName) + ".";
 					return opt::nullopt;
 				}
 
@@ -197,7 +326,7 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 				{
 					if (!isValidLuaName(prop->arguments[1]))
 					{
-						errorMessage = std::string(funcLuaPropertyName) + " 2nd argument must be a string designing the lua function name.";
+						errorMessage = std::string(LuaFuncPropertyCodeGen::funcLuaPropertyName) + " 2nd argument must be a string designing the lua function name.";
 						return opt::nullopt;
 					}
 					else
@@ -216,8 +345,6 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 
 		return opt::nullopt;
 	};
-
-	kodgen::Property const* prop = nullptr;
 
 	switch (entity.entityType)
 	{

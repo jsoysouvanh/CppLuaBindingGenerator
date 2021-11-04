@@ -10,10 +10,14 @@
 #include <Kodgen/CodeGen/Macro/MacroCodeGenModule.h>
 
 #include "LuaProperty.h"
+#include "LuaFuncPropertyCodeGen.h"
 
 class CppLuaBindCodeGenModule : public kodgen::MacroCodeGenModule
 {
 	private:
+		/** Property code generator for LuaFunc property */
+		LuaFuncPropertyCodeGen	_luaFuncPropertyCodeGen;
+		
 		/**
 		*	Collection of entities used to generate code.
 		*	This collection is used to avoid checking if an entity is eligible for code generation multiple times.
@@ -62,7 +66,7 @@ class CppLuaBindCodeGenModule : public kodgen::MacroCodeGenModule
 		static bool							isValidLuaName(std::string const& name)						noexcept;
 
 		/**
-		*	@brief Generate initLuaBinding and deinitLuaBinding methods.
+		*	@brief Generate sol::usertype static field, initLuaBinding and deinitLuaBinding methods declarations.
 		* 
 		*	@param class_		Target class.
 		*	@param env			Generation environment.
@@ -70,13 +74,48 @@ class CppLuaBindCodeGenModule : public kodgen::MacroCodeGenModule
 		* 
 		*	@return true if the generation completed without errors, else false.
 		*/
-		bool generateClassFooterCodeForClass(kodgen::StructClassInfo const& class_,
+		bool generateClassFooterCodeForClass(kodgen::StructClassInfo const&	class_,
 											 kodgen::MacroCodeGenEnv&		env,
-											 std::string&					inout_result)	noexcept;
+											 std::string&					inout_result)		noexcept;
 
-		bool generateSourceCodeForClass(kodgen::StructClassInfo const& class_,
+		/**
+		*	@brief Generate sol::usertype static field, initLuaBinding and deinitLuaBinding methods definitions.
+		* 
+		*	@param class_		Target class.
+		*	@param env			Generation environment.
+		*	@param inout_result	Generated code.
+		* 
+		*	@return true if the generation completed without errors, else false.
+		*/
+		bool generateSourceCodeForClass(kodgen::StructClassInfo const&	class_,
 										kodgen::MacroCodeGenEnv&		env,
-										std::string&					inout_result)	noexcept;
+										std::string&					inout_result)			noexcept;
+
+		/**
+		*	@brief Generate the initLuaBinding method definition for the provided class.
+		* 
+		*	@param class_		Target class.
+		*	@param env			Generation environment.
+		*	@param inout_result	Generated code.
+		* 
+		*	@return true if the generation completed without errors, else false.
+		*/
+		bool generateInitLuaBindingDefinition(kodgen::StructClassInfo const&	class_,
+											  kodgen::MacroCodeGenEnv&			env,
+											  std::string&						inout_result)	noexcept;
+
+		/**
+		*	@brief Generate the initLuaBinding method definition for the provided class.
+		* 
+		*	@param class_		Target class.
+		*	@param env			Generation environment.
+		*	@param inout_result	Generated code.
+		* 
+		*	@return true if the generation completed without errors, else false.
+		*/
+		bool generateDeinitLuaBindingDefinition(kodgen::StructClassInfo const&	class_,
+												kodgen::MacroCodeGenEnv&		env,
+												std::string&					inout_result)	noexcept;
 
 	public:
 		/**
@@ -107,34 +146,18 @@ class CppLuaBindCodeGenModule : public kodgen::MacroCodeGenModule
 		static constexpr std::string_view const readWritePropertyName	= "ReadWrite";
 
 		/**
-		*	Name of the property used to bind a c++ method/function to lua.
-		*	It takes 2 parameters (2nd is optional):
-		*		- the 1st param defines if the method is implemented in c++ or in lua.
-		*		- the 2nd param is the name of the method exposed to lua.
-		*			If unspecified, defaults to the name of the C++ method.
-		*/
-		static constexpr std::string_view const funcLuaPropertyName		= "LuaFunc";
-
-		/**
-		*	Make a c++ method implementable in lua instead of c++.
-		*/
-		static constexpr std::string_view const luaImplPropertyName		= "LuaImpl";
-
-		/**
-		*	Make a c++ method exposed (callable from) to lua.
-		*/
-		static constexpr std::string_view const luaExposedPropertyName	= "LuaExposed";
-
-		/**
 		*	Association between a property name and its matching ELuaProperty value.
 		*/
 		static inline std::unordered_map<std::string_view, ELuaProperty> luaPropertyNameValue
 		{
 			{ readonlyPropertyName, ELuaProperty::ReadOnly },
 			{ readWritePropertyName, ELuaProperty::ReadWrite },
-			{ luaImplPropertyName, ELuaProperty::LuaImpl },
-			{ luaExposedPropertyName, ELuaProperty::LuaExposed },
+			{ LuaFuncPropertyCodeGen::luaImplPropertyName, ELuaProperty::LuaImpl },
+			{ LuaFuncPropertyCodeGen::luaExposedPropertyName, ELuaProperty::LuaExposed },
 		};
+
+		CppLuaBindCodeGenModule()								noexcept;
+		CppLuaBindCodeGenModule(CppLuaBindCodeGenModule const&)	noexcept;
 
 		virtual CppLuaBindCodeGenModule*	clone()																	const	noexcept	override;
 
@@ -150,6 +173,13 @@ class CppLuaBindCodeGenModule : public kodgen::MacroCodeGenModule
 		virtual kodgen::ETraversalBehaviour	generateClassFooterCodeForEntity(kodgen::EntityInfo const&	entity,
 																			 kodgen::MacroCodeGenEnv&	env,
 																			 std::string&				inout_result)		noexcept	override;
+
+		/**
+		*	@brief Generate initLuaBinding and deinitLuaBinding methods if entity is a class with the LuaClass property.
+		*/
+		virtual kodgen::ETraversalBehaviour	generateSourceFileHeaderCodeForEntity(kodgen::EntityInfo const&	entity,
+																				  kodgen::MacroCodeGenEnv&	env,
+																				  std::string&				inout_result)	noexcept	override;
 };
 
 #include "CppLuaBindCodeGenModule.inl"

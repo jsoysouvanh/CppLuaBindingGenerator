@@ -26,7 +26,7 @@ class CLASS(LuaClass) Component
 		static void staticFunc() noexcept;
 
 		METHOD(LuaFunc(LuaImpl))
-		static void staticFuncLua() noexcept;
+		static void staticFuncLua();
 
 /*
 	////// TARGET GENERATED CODE FROM HERE
