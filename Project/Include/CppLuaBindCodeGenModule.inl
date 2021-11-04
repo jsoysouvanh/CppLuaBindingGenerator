@@ -133,8 +133,6 @@ bool CppLuaBindCodeGenModule::generateInitLuaBindingDefinition(kodgen::StructCla
 
 	std::string error;
 
-	auto it = _validEntities.find(&class_);
-
 	inout_result += "bool " + class_.getFullName() + "::initLuaBinding(sol::state& luaState) {" + env.getSeparator() +
 		"if (luaType.lua_state() == nullptr)" + env.getSeparator() +
 		"{" + env.getSeparator() +
