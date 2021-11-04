@@ -46,13 +46,13 @@ void Component::init()
 {
 	//TODO: Should maybe forward the call to an external class to handle
 	//call status
-	return luaType["initlua"].call<void>(this);	//<void> is <ReturnType>
+	luaType["initlua"].call(this);
 }
 
 //Generated from LuaFunc(staticFuncLua) property
 void Component::staticFuncLua() noexcept
 {
-	return luaType["staticFuncLua"].call<void>();	//<void> is <ReturnType>
+	luaType["staticFuncLua"].call();
 }
 
 //=======================================

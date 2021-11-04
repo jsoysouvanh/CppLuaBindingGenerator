@@ -27,7 +27,13 @@ target_include_directories(${CppLuaBindingTests}
 								"ThirdParty/Lua/lua-5.4.3/include"
 								"ThirdParty/sol2/include")
 
-target_link_libraries(${CppLuaBindingTests} PRIVATE lua_static Threads::Threads)
+target_link_libraries(${CppLuaBindingTests}
+						PRIVATE
+							lua_static
+							Threads::Threads
+							$<$<AND:$<CXX_COMPILER_ID:Clang,AppleClang>,$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},9.0>>:stdc++fs>	#filesystem	pre Clang-9
+							$<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:${CMAKE_CXX_COMPILER_VERSION},9.0>>:stdc++fs>					#filesystem	pre GCC-9
+						)
 
 #OS specific flags
 if (MSVC)
