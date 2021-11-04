@@ -4,9 +4,9 @@
 
 #include "ELuaProperty.h"
 
-#include "Generated/Component.h.h"
+#include "Generated/Component.h.h" 
 
-class CLASS() Component
+class CLASS(LuaClass) Component
 {
 	private:
 		FIELD(LuaVar(ReadOnly, "intReadonlyLua"))
@@ -28,11 +28,9 @@ class CLASS() Component
 		METHOD(LuaFunc(LuaImpl))
 		static void staticFuncLua() noexcept;
 
+/*
+	////// TARGET GENERATED CODE FROM HERE
 
-
-
-
-		////// TARGET GENERATED CODE FROM HERE
 	private:
 		static sol::usertype<Component> luaType;
 
@@ -40,7 +38,8 @@ class CLASS() Component
 		static bool initLuaBinding(sol::state& luaState);
 		static bool deinitLuaBinding();
 
-		////// END TARGET GENERATED CODE
+	////// END TARGET GENERATED CODE
+*/
 
 	Component_GENERATED
 };

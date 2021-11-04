@@ -6,6 +6,8 @@
 #include <Kodgen/CodeGen/CodeGenManager.h>
 #include <Kodgen/CodeGen/Macro/MacroCodeGenUnitSettings.h>
 
+#include "CppLuaBindCodeGenModule.h"
+
 void printGenerationSetup(kodgen::ILogger& logger, kodgen::CodeGenManagerSettings const& codeGenMgrSettings, kodgen::ParsingSettings const& parsingSettings,
 						  kodgen::MacroCodeGenUnitSettings const& codeGenUnitSettings)
 {
@@ -122,9 +124,8 @@ void parseAndGenerate(fs::path&& settingsFilePath)
 	codeGenUnit.logger = &logger;
 	codeGenUnit.setSettings(codeGenUnitSettings);
 
-	//TODO: Add Code gen module here
-	//rfk::ReflectionCodeGenModule reflectionCodeGenModule;	
-	//codeGenUnit.addModule(reflectionCodeGenModule);
+	CppLuaBindCodeGenModule cppLuaBindCodeGenModule;	
+	codeGenUnit.addModule(cppLuaBindCodeGenModule);
 
 	//Load settings
 	logger.log("Working Directory: " + fs::current_path().string(), kodgen::ILogger::ELogSeverity::Info);
@@ -133,7 +134,7 @@ void parseAndGenerate(fs::path&& settingsFilePath)
 	loadSettings(logger, codeGenMgr.settings, fileParser.getSettings(), codeGenUnitSettings, std::forward<fs::path>(settingsFilePath));
 
 	//Parse
-	kodgen::CodeGenResult genResult = codeGenMgr.run(fileParser, codeGenUnit, false);
+	kodgen::CodeGenResult genResult = codeGenMgr.run(fileParser, codeGenUnit, true);
 
 	//Result
 	printGenerationResult(logger, genResult);

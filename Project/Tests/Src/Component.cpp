@@ -4,7 +4,7 @@
 //=========== GENERATED CODE ============
 //=======================================
 
-sol::usertype<Component> Component::luaType;
+sol::usertype<Component> Component::luaType = sol::lua_nil;
 
 bool Component::initLuaBinding(sol::state& luaState)
 {
@@ -33,7 +33,7 @@ bool Component::deinitLuaBinding()
 	if (luaType.lua_state() != nullptr)
 	{
 		luaType.unregister();
-		luaType = sol::usertype<Component>();	//sol::state dtor crash if this line is not here, wtf
+		luaType = sol::lua_nil;
 
 		return true;
 	}
