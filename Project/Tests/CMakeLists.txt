@@ -44,6 +44,11 @@ endif()
 #User flags
 if (CI_BUILD)
 	target_compile_definitions(${CppLuaBindingTests} PRIVATE CI_BUILD=1)
+
+	if (NOT MSVC) # Clang or GCC
+		target_compile_options(${CppLuaBindingTests} PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+		target_link_options(${CppLuaBindingTests} PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+	endif()
 endif()
 
 # Create the command to run CppLuaBindingGenerator
