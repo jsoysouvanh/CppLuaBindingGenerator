@@ -5,8 +5,8 @@
 *	See the LICENSE.md file for full license details.
 */
 
-#pragma once
-
-#include "LuaClass.h"
-#include "LuaFunc.h"
-#include "LuaVar.h"
+template<typename T, typename... Args>
+UniquePtr<T> makeUnique(Args&&... args)
+{
+	return std::make_unique<T>(std::forward<Args>(args)...);
+}

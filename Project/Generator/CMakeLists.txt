@@ -20,3 +20,5 @@ else ()	# Clang or GCC
 	target_compile_options(${CppLuaBindingGenerator} PRIVATE -Wall -Wextra -Wpedantic)
 
 endif()
+
+add_subdirectory(LibraryGenerator)

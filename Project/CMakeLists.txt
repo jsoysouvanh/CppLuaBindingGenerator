@@ -5,4 +5,5 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)	# .dll / .so / .dyli
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Bin)	# .exe
 
 add_subdirectory(Generator)
+add_subdirectory(Library)
 add_subdirectory(Tests)

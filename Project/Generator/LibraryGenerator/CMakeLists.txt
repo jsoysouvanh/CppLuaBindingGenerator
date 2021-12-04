@@ -1,0 +1,7 @@
+project(CppLuaBindLibraryGenerator)
+
+add_executable(CppLuaBindLibraryGenerator main.cpp)
+
+target_include_directories(CppLuaBindLibraryGenerator PUBLIC "ThirdParty")
+
+target_link_libraries(CppLuaBindLibraryGenerator PRIVATE Kodgen)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CppLuaBinding/LuaProperties.h>
+#include <CppLuaBind/LuaProperties.h>
 
 #include "Generated/Component.h.h"
 
