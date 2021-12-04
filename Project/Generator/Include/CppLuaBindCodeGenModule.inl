@@ -247,28 +247,37 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 		if (prop != nullptr)
 		{
 			//Must have 1 or 2 args (2nd arg is optional)
-			if (prop->arguments.size() != 1u && prop->arguments.size() != 2u)
+			if (prop->arguments.size() > 2u)
 			{
-				errorMessage = std::string(varLuaPropertyName) + " must have 1 or 2 arguments (1: " + std::string(readonlyPropertyName) +
+				errorMessage = std::string(varLuaPropertyName) + " must have 0, 1 or 2 arguments (1: " + std::string(readonlyPropertyName) +
 								" or " + std::string(readWritePropertyName) + ", 2: name of the lua variable).";
 			}
 			else
 			{
 				//Check 1st arg
-				auto it = luaPropertyNameValue.find(prop->arguments[0]);
-
-				if (it == luaPropertyNameValue.cend() || !overlap(it->second, ELuaProperty::ReadOnly | ELuaProperty::ReadWrite))
+				ELuaProperty luaPropertyValue;
+				if (prop->arguments.size() > 0u)
 				{
-					errorMessage = std::string(varLuaPropertyName) + " 1st argument must be one of " + std::string(readonlyPropertyName) +
-									" or " + std::string(readWritePropertyName) + ".";
-					return opt::nullopt;
-				}
+					auto it = luaPropertyNameValue.find(prop->arguments[0]);
 
-				ELuaProperty luaPropertyValue = it->second;
+					if (it == luaPropertyNameValue.cend() || !overlap(it->second, ELuaProperty::ReadOnly | ELuaProperty::ReadWrite))
+					{
+						errorMessage = std::string(varLuaPropertyName) + " 1st argument must be one of " + std::string(readonlyPropertyName) +
+							" or " + std::string(readWritePropertyName) + ".";
+						return opt::nullopt;
+					}
+
+					luaPropertyValue = it->second;
+				}
+				else
+				{
+					//First arg defaults to ReadWrite
+					luaPropertyValue = ELuaProperty::ReadWrite;
+				}
 
 				//Check 2nd arg
 				std::string luaVarName;
-				if (prop->arguments.size() == 2u)
+				if (prop->arguments.size() > 1u)
 				{
 					if (!isValidLuaName(prop->arguments[1]))
 					{
@@ -299,7 +308,7 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 		if (prop != nullptr)
 		{
 			//Must have 1 or 2 args (2nd arg is optional)
-			if (prop->arguments.size() != 1u && prop->arguments.size() != 2u)
+			if (prop->arguments.size() > 2u)
 			{
 				errorMessage = std::string(LuaFuncPropertyCodeGen::funcLuaPropertyName) + " must have 1 or 2 arguments (1: " + std::string(LuaFuncPropertyCodeGen::luaImplPropertyName) +
 					" or " + std::string(LuaFuncPropertyCodeGen::luaExposedPropertyName) + ", 2: name of the lua function).";
@@ -307,20 +316,29 @@ std::optional<LuaProperty> CppLuaBindCodeGenModule::getLuaProperty(kodgen::Entit
 			else
 			{
 				//Check 1st arg
-				auto it = luaPropertyNameValue.find(prop->arguments[0]);
-
-				if (it == luaPropertyNameValue.cend() || !overlap(it->second, ELuaProperty::LuaImpl | ELuaProperty::LuaExposed))
+				ELuaProperty luaPropertyValue;
+				if (prop->arguments.size() > 0u)
 				{
-					errorMessage = std::string(LuaFuncPropertyCodeGen::funcLuaPropertyName) + " 1st argument must be one of " + std::string(LuaFuncPropertyCodeGen::luaImplPropertyName) +
-						" or " + std::string(LuaFuncPropertyCodeGen::luaExposedPropertyName) + ".";
-					return opt::nullopt;
-				}
+					auto it = luaPropertyNameValue.find(prop->arguments[0]);
 
-				ELuaProperty luaPropertyValue = it->second;
+					if (it == luaPropertyNameValue.cend() || !overlap(it->second, ELuaProperty::LuaImpl | ELuaProperty::LuaExposed))
+					{
+						errorMessage = std::string(LuaFuncPropertyCodeGen::funcLuaPropertyName) + " 1st argument must be one of " + std::string(LuaFuncPropertyCodeGen::luaImplPropertyName) +
+							" or " + std::string(LuaFuncPropertyCodeGen::luaExposedPropertyName) + ".";
+						return opt::nullopt;
+					}
+
+					luaPropertyValue = it->second;
+				}
+				else
+				{
+					//First arg defaults to Exposed
+					luaPropertyValue = ELuaProperty::LuaExposed;
+				}
 
 				//Check 2nd arg
 				std::string luaFuncName;
-				if (prop->arguments.size() == 2u)
+				if (prop->arguments.size() > 1u)
 				{
 					if (!isValidLuaName(prop->arguments[1]))
 					{
@@ -381,7 +399,7 @@ kodgen::Property const* CppLuaBindCodeGenModule::findProperty(kodgen::EntityInfo
 
 bool CppLuaBindCodeGenModule::isValidLuaName(std::string const& name) noexcept
 {
-	return name.size() >= 2u && name.front() == '"' && name.back() == '"';
+	return name.size() > 2u && name.front() == '"' && name.back() == '"';
 }
 
 std::string CppLuaBindCodeGenModule::quoteString(std::string string) noexcept

@@ -124,7 +124,7 @@ void parseAndGenerate(fs::path&& settingsFilePath)
 	codeGenUnit.logger = &logger;
 	codeGenUnit.setSettings(codeGenUnitSettings);
 
-	CppLuaBindCodeGenModule cppLuaBindCodeGenModule;	
+	clb::CppLuaBindCodeGenModule cppLuaBindCodeGenModule;	
 	codeGenUnit.addModule(cppLuaBindCodeGenModule);
 
 	//Load settings

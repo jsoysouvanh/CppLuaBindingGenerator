@@ -1,15 +1,13 @@
-cmake_minimum_required(VERSION 3.13.5)
-
-project(CppLuaBindingGeneratorTests)
+project(CppLuaBindingTests)
 
 include(CTest)
 
 add_subdirectory(ThirdParty/Lua)
 add_subdirectory(ThirdParty/efsw)
 
-###########################################
-#		Configure the tests
-###########################################
+###############################
+#		Configure tests
+###############################
 
 find_package(Threads REQUIRED)
 
@@ -25,6 +23,7 @@ target_compile_features(${CppLuaBindingTests} PUBLIC cxx_std_17)
 target_include_directories(${CppLuaBindingTests}
 							PUBLIC
 								"Include"
+								"../Library/Include"
 								"ThirdParty/Lua/lua-5.4.3/include"
 								"ThirdParty/sol2/include")
 

@@ -9,7 +9,7 @@ bool LuaFuncPropertyCodeGen::generateSourceFileHeaderCodeForEntity(kodgen::Entit
 																   kodgen::uint8 /*propertyIndex*/, kodgen::MacroCodeGenEnv& env, std::string& inout_result) noexcept
 {
 	//The CppLuaBindCodeGenModule already checked for the property validity, so we don't need to check again
-	if (property.arguments[0] == luaImplPropertyName)
+	if (property.arguments.size() > 0u && property.arguments[0] == luaImplPropertyName)
 	{
 		std::string paramList;
 		std::string paramName;

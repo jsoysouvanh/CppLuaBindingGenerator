@@ -1,5 +1,5 @@
 [submodule "Project/ThirdParty/Kodgen"]
-	path = Project/ThirdParty/Kodgen
+	path = Project/Generator/ThirdParty/Kodgen
 	url = https://github.com/jsoysouvanh/Kodgen.git
 [submodule "Project/Tests/ThirdParty/Lua"]
 	path = Project/Tests/ThirdParty/Lua

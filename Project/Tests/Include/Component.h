@@ -1,32 +1,36 @@
 #pragma once
 
-#include <sol/sol.hpp>	//GENERATED CODE
+#include <CppLuaBinding/LuaProperties.h>
 
-#include "ELuaProperty.h"
+#include "Generated/Component.h.h"
 
-#include "Generated/Component.h.h" 
-
-class CLASS(LuaClass) Component
+class CLASS(clb::LuaClass) Component
 {
 	private:
-		FIELD(LuaVar(ReadOnly, "intReadonlyLua"))
+		FIELD(clb::LuaVar(clb::ReadOnly, "intReadonlyLua"))
 		int intReadonly = 0;
 
-		FIELD(LuaVar(ReadWrite, "intReadWriteLua"))
+		FIELD(clb::LuaVar(clb::ReadWrite, "intReadWriteLua"))
 		int intReadWrite = 0;
 
+		FIELD(clb::LuaVar) //Defaults to ReadWrite / c++ var name
+		int defaultInt = 0;
+
 	public:
-		METHOD(LuaFunc(LuaImpl, "initlua"))
+		METHOD(clb::LuaFunc(clb::LuaImpl, "initlua"))
 		virtual void init();
 
-		METHOD(LuaFunc(LuaExposed))
+		METHOD(clb::LuaFunc(clb::LuaExposed))
 		virtual void update();
 
-		METHOD(LuaFunc(LuaExposed))
+		METHOD(clb::LuaFunc(clb::LuaExposed))
 		static void staticFunc() noexcept;
 
-		METHOD(LuaFunc(LuaImpl))
+		METHOD(clb::LuaFunc(clb::LuaImpl))
 		static void staticFuncLua();
+
+		METHOD(clb::LuaFunc) //Defaults to LuaExposed / c++ func name
+		void defaultMethod();
 
 /*
 	////// TARGET GENERATED CODE FROM HERE

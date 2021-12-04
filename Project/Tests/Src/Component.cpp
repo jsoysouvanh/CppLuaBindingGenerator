@@ -70,3 +70,8 @@ void Component::staticFunc() noexcept
 {
 	std::cout << "Component::staticFunc() from C++" << std::endl;
 }
+
+void Component::defaultMethod()
+{
+	std::cout << "Component::defaultMethod() from C++" << std::endl;
+}
